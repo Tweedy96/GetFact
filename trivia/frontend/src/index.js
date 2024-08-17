@@ -1,6 +1,15 @@
-import App from './components/App';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./components/App";
 
-// Your code goes here
+// Store the root instance globally
+let root;
 
-app_ = App;
+const appDiv = document.getElementById("app");
 
+// Check if the root instance already exists
+if (!root) {
+    root = createRoot(appDiv);
+}
+
+root.render(<App />);
