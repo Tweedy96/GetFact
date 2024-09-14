@@ -1,35 +1,77 @@
+import { Button, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-const Room = () => {
-    const { roomCode } = useParams();
+const Room = (props) => {
     const [votesToSkip, setVotesToSkip] = useState(2);
     const [guestCanPause, setGuestCanPause] = useState(false);
     const [isHost, setIsHost] = useState(false);
+    const { roomCode } = useParams();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const getRoomDetails = async () => {
-            try {
-                const response = await fetch(`/api/get-room?code=${roomCode}`);
-                const data = await response.json();
+        getRoomDetails();
+    }, []);
+
+    const getRoomDetails = () => {
+        fetch("/api/get-room" + "?code=" + roomCode)
+            .then((response) => {
+                if (!response.ok) {
+                    props.leaveRoomCallback();
+                    navigate("/");
+                }
+                return response.json();
+            })
+            .then((data) => {
                 setVotesToSkip(data.votes_to_skip);
                 setGuestCanPause(data.guest_can_pause);
                 setIsHost(data.is_host);
-            } catch (error) {
-                console.error("Error fetching room details:", error);
-            }
-        };
+            });
+    };
 
-        getRoomDetails();
-    }, [roomCode]);
+    const leaveButtonPressed = () => {
+        const requestOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        };
+        fetch("/api/leave-room", requestOptions).then((_response) => {
+            props.leaveRoomCallback();
+            navigate("/");
+        });
+    };
 
     return (
-        <div>
-            <h3>{roomCode}</h3>
-            <p>Votes: {votesToSkip}</p>
-            <p>Guest Can Pause: {guestCanPause.toString()}</p>
-            <p>Host: {isHost.toString()}</p>
-        </div>
+        <Grid container spacing={1}>
+            <Grid item xs={12} align="center">
+                <Typography variant="h4" component="h4">
+                    Code: {roomCode}
+                </Typography>
+            </Grid>
+            <Grid item xs={12} align="center">
+                <Typography variant="h6" component="h6">
+                    Votes: {votesToSkip}
+                </Typography>
+            </Grid>
+            <Grid item xs={12} align="center">
+                <Typography variant="h6" component="h6">
+                    Guest Can Pause: {guestCanPause.toString()}
+                </Typography>
+            </Grid>
+            <Grid item xs={12} align="center">
+                <Typography variant="h6" component="h6">
+                    Host: {isHost.toString()}
+                </Typography>
+            </Grid>
+            <Grid item xs={12} align="center">
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={leaveButtonPressed}
+                >
+                    Leave Room
+                </Button>
+            </Grid>
+        </Grid>
     );
 };
 
